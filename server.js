@@ -14,14 +14,20 @@ const io = new Server(server, {
   },
 });
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Serve static file
+const __dirname = dirname(fileURLToPath(import.meta.url));
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "index.html"));
 });
 
-const onlineUserList = [];
-const removeUser = (socketId, socket) => {
+const onlineUsers = new Map();
+
+const updateOnlineUsersList = () => {
+  io.emit("onlineUserList", Array.from(onlineUsers.values()));
+};
+
+const removeUser = (socketId) => {
   const index = onlineUserList.findIndex(
     (item) => item.socketid === socketId
   );
@@ -36,9 +42,9 @@ io.on("connection", (socket) => {
   console.log(`A new user${socket.id} has joined!`);
 
   socket.on("joinRoom", (roomName) => {
-    console.log(socket.rooms);
+    console.log("rooms", socket.rooms);
     if (socket.rooms.has(roomName)) {
-      console.log("Already in room", roomName);
+      // console.log("Already in room", roomName);
       return;
     }
     for (const room of socket.rooms) {
@@ -49,6 +55,7 @@ io.on("connection", (socket) => {
     }
     socket.join(roomName);
     console.log(`${socket.id} joined room: ${roomName}`);
+    
   })
 
   socket.on("leaveRoom", (roomName) => {
@@ -61,28 +68,26 @@ io.on("connection", (socket) => {
 
   socket.on("onlineUserList", (operator, user) => {
     if (operator === "add") {
-    console.log("add", user)
+      console.log("add", user)
 
-      onlineUserList.push({ ...user, socketid: socket.id });
+      onlineUsers.set(socket.id, { ...user, socketid: socket.id });
     }
-    console.log("emit onlineUserList", onlineUserList);
-    io.emit("onlineUserList", onlineUserList);
+    console.log("📤 Broadcasting onlineUserList:", Array.from(onlineUsers.values()));
+    updateOnlineUsersList();
   });
 
   socket.on("message", (msg, room) => {
     io.to(room).emit("message", msg);
   });
 
-
-  socket.on("request", (obj1, callback) => {
-    console.log(obj1); // { foo: 'bar' }
-  });
   socket.on("disconnect", (reason) => {
     console.log("Client disconnected:", socket.id, "Reason:", reason);
-    removeUser(socket.id, socket);
+    onlineUsers.delete(socket.id);
+    updateOnlineUsersList();
   });
 });
 
-server.listen(5000, () => {
-  console.log("server running at http://localhost:4000");
+const PORT = 4000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
