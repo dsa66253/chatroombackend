@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { Server } from "socket.io";
+import { on } from "node:events";
 
 const app = express();
 const server = createServer(app);
@@ -27,18 +28,7 @@ const updateOnlineUsersList = () => {
   io.emit("onlineUserList", Array.from(onlineUsers.values()));
 };
 
-const removeUser = (socketId) => {
-  const index = onlineUserList.findIndex(
-    (item) => item.socketid === socketId
-  );
-  if (index !== -1) {
-    onlineUserList.splice(index, 1); // removes the item in place
-  }
-  console.log("onlineUserList", onlineUserList);
-  io.emit("onlineUserList", onlineUserList);
-};
-
-io.on("connection", (socket) => {
+const onConnection = (socket) => {
   console.log(`A new user${socket.id} has joined!`);
 
   socket.on("joinRoom", (roomName) => {
@@ -85,7 +75,10 @@ io.on("connection", (socket) => {
     onlineUsers.delete(socket.id);
     updateOnlineUsersList();
   });
-});
+}
+
+
+io.on("connection", onConnection);
 
 const PORT = 4000;
 server.listen(PORT, () => {
