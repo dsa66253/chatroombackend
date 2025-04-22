@@ -18,14 +18,14 @@ const registerOnlineUserHandler = (io, socket) => {
     socket.leave(roomName);
     console.log(`${socket.id} left room: ${roomName}`);
   };
-  
+
   const emitMessage = (msg, room) => {
     io.to(room).emit("message", msg);
   };
   
   socket.on("message", emitMessage);
-  socket.on("joinRoom", joinRoom);
-  socket.on("leaveRoom", leaveRoom);
+  socket.on("join_room", joinRoom);
+  socket.on("leave_room", leaveRoom);
 };
 
 export default registerOnlineUserHandler;

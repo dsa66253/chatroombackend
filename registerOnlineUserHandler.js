@@ -1,7 +1,7 @@
 const onlineUsers = new Map();
 
 const updateOnlineUsersList = (io) => {
-  io.emit("onlineUserList", Array.from(onlineUsers.values()));
+  io.emit("online_user_list", Array.from(onlineUsers.values()));
 };
 
 const registerOnlineUserHandler = (io, socket) => {
@@ -16,13 +16,14 @@ const registerOnlineUserHandler = (io, socket) => {
     );
     updateOnlineUsersList(io);
   }
+  
   const disconnect = (reason) => {
     console.log("Client disconnected:", socket.id, "Reason:", reason);
     onlineUsers.delete(socket.id);
     updateOnlineUsersList(io);
   }
 
-  socket.on("onlineUserList", doOnlineUser);
+  socket.on("online_user_list", doOnlineUser);
   socket.on("disconnect", disconnect);
 };
 
